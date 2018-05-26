@@ -1,6 +1,9 @@
+import kuruhuru.tictactoe.bignum.Bignum;
+
 public class Test {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        Bignum b = new Bignum(0, 0, 0, -1);
+        System.out.println(b.minusOne().toBinaryString());
     }
 }
