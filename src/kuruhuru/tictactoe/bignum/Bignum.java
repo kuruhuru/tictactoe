@@ -144,4 +144,59 @@ public class Bignum {
                     num[3]--;
         return this;
     }
+
+    /**
+     * Bitwise shift
+     * @param shift positive means shift to left, negative means shift to right
+     * @return shifted bignum
+     */
+    public Bignum bitwiseShift(int shift) {
+        if (shift > 0) {
+            int gaps = shift/64;
+            if (gaps >= 4) { // becomes zero
+                for (int i = 0; i<4; i++) {num[i] = 0;}
+            } else {
+                shift %= 64;
+                for (int i = 3; i >= 0; i--) {
+                    if (i < gaps) {
+                        num[i] = 0;
+                    } else {
+                        num[i] = num[i - gaps];
+                    }
+                }
+                for (int i = 3; i >= gaps; i--) {
+                    if (i == gaps) {
+                        num[i] <<= shift;
+                    } else {
+                        num[i] <<= shift;
+                        num[i] |= num[i-1] >> (64 - shift);
+                    }
+                }
+            }
+        } else if (shift < 0) {
+            shift = -shift;
+            int gaps = shift/64;
+            if (gaps >= 4) {// becomes zero
+                for (int i = 0; i<4; i++) {num[i] = 0;}
+            } else {
+                shift %= 64;
+                for (int i = 0; i < 4; i++) {
+                    if (i > 3 - gaps) {
+                        num[i] = 0;
+                    } else {
+                        num[i] = num[i + gaps];
+                    }
+                }
+                for (int i = 0; i < 4 - gaps; i++) {
+                    if (i == 3 - gaps) {
+                        num[i] >>>= shift;
+                    } else {
+                        num[i] >>>= shift;
+                        num[i] |= num[i+1] << (64 - shift);
+                    }
+                }
+            }
+        }
+        return this;
+    }
 }
