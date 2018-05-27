@@ -3,6 +3,9 @@ package kuruhuru.tictactoe.bignum;
 import java.util.Arrays;
 
 /**
+ * The class implements a set of (mostly bitwise) operations on 256 bits (4 * 64, 4 * long).
+ * This is necessary to implement the logic of artificial intelligence in the game of tic-tac-toe,
+ * where the board cells are represented in the form of a sequence of bits.
  * @author Petr Matyukov
  * @version %I%, %G%
  */
@@ -19,6 +22,7 @@ public class Bignum {
     }
 
     public Bignum(Bignum bignum) {
+        num = new long[4];
         System.arraycopy(bignum.num, 0, num, 0, 4);
     }
 
@@ -29,6 +33,7 @@ public class Bignum {
     }
 
     public Bignum set(Bignum bignum) {
+        num = new long[4];
         System.arraycopy(bignum.num, 0, num, 0, 4);
         return this;
     }
@@ -147,14 +152,17 @@ public class Bignum {
 
     /**
      * Bitwise shift
+     *
      * @param shift positive means shift to left, negative means shift to right
      * @return shifted bignum
      */
     public Bignum bitwiseShift(int shift) {
         if (shift > 0) {
-            int gaps = shift/64;
+            int gaps = shift / 64;
             if (gaps >= 4) { // becomes zero
-                for (int i = 0; i<4; i++) {num[i] = 0;}
+                for (int i = 0; i < 4; i++) {
+                    num[i] = 0;
+                }
             } else {
                 shift %= 64;
                 for (int i = 3; i >= 0; i--) {
@@ -169,15 +177,17 @@ public class Bignum {
                         num[i] <<= shift;
                     } else {
                         num[i] <<= shift;
-                        num[i] |= num[i-1] >> (64 - shift);
+                        num[i] |= num[i - 1] >> (64 - shift);
                     }
                 }
             }
         } else if (shift < 0) {
             shift = -shift;
-            int gaps = shift/64;
+            int gaps = shift / 64;
             if (gaps >= 4) {// becomes zero
-                for (int i = 0; i<4; i++) {num[i] = 0;}
+                for (int i = 0; i < 4; i++) {
+                    num[i] = 0;
+                }
             } else {
                 shift %= 64;
                 for (int i = 0; i < 4; i++) {
@@ -192,7 +202,7 @@ public class Bignum {
                         num[i] >>>= shift;
                     } else {
                         num[i] >>>= shift;
-                        num[i] |= num[i+1] << (64 - shift);
+                        num[i] |= num[i + 1] << (64 - shift);
                     }
                 }
             }
