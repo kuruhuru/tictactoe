@@ -13,17 +13,27 @@ public class Bignum {
     private long[] num;
 
 
+    /**
+     * Creates Bignum with size
+     * @param size is number of Long
+     */
+    public Bignum(byte size) {
+        if (size <= 0)
+            size = 4;
+        num = new long[size];
+    }
+
     public Bignum() {
         num = new long[4];
     }
 
-    public Bignum(long n1, long n2, long n3, long n4) {
-        num = new long[]{n1, n2, n3, n4};
+    public Bignum(long... numbers) {
+        num = numbers;
     }
 
     public Bignum(Bignum bignum) {
-        num = new long[4];
-        System.arraycopy(bignum.num, 0, num, 0, 4);
+        num = new long[bignum.num.length];
+        System.arraycopy(bignum.num, 0, num, 0, bignum.num.length);
     }
 
     public static Bignum newOne() {
@@ -32,19 +42,22 @@ public class Bignum {
         return res;
     }
 
+    public static Bignum newOne(byte size) {
+        Bignum res = new Bignum(size);
+        res.num[0] = 1L;
+        return res;
+    }
+
+
     public Bignum set(Bignum bignum) {
-        num = new long[4];
-        System.arraycopy(bignum.num, 0, num, 0, 4);
+        num = new long[bignum.num.length];
+        System.arraycopy(bignum.num, 0, num, 0, bignum.num.length);
         return this;
     }
 
-    public Bignum set(long n1, long n2, long n3, long n4) {
-        num = new long[]{n1, n2, n3, n4};
+    public Bignum set(long... numbers) {
+        num = numbers;
         return this;
-    }
-
-    public Bignum copy() {
-        return new Bignum(this);
     }
 
 
@@ -143,10 +156,8 @@ public class Bignum {
      * bignum - 1
      */
     public Bignum minusOne() {
-        if (--num[0] == -1)
-            if (--num[1] == -1)
-                if (--num[2] == -1)
-                    num[3]--;
+        for (int i=0; i<num.length; i++)
+            if (--num[i] != -1) break;
         return this;
     }
 
@@ -159,20 +170,20 @@ public class Bignum {
     public Bignum bitwiseShift(int shift) {
         if (shift > 0) {
             int gaps = shift / 64;
-            if (gaps >= 4) { // becomes zero
-                for (int i = 0; i < 4; i++) {
+            if (gaps >= num.length) { // becomes zero
+                for (int i = 0; i < num.length; i++) {
                     num[i] = 0;
                 }
             } else {
                 shift %= 64;
-                for (int i = 3; i >= 0; i--) {
+                for (int i = num.length-1; i >= 0; i--) {
                     if (i < gaps) {
                         num[i] = 0;
                     } else {
                         num[i] = num[i - gaps];
                     }
                 }
-                for (int i = 3; i >= gaps; i--) {
+                for (int i = num.length-1; i >= gaps; i--) {
                     if (i == gaps) {
                         num[i] <<= shift;
                     } else {
@@ -184,21 +195,21 @@ public class Bignum {
         } else if (shift < 0) {
             shift = -shift;
             int gaps = shift / 64;
-            if (gaps >= 4) {// becomes zero
-                for (int i = 0; i < 4; i++) {
+            if (gaps >= num.length) {// becomes zero
+                for (int i = 0; i < num.length; i++) {
                     num[i] = 0;
                 }
             } else {
                 shift %= 64;
-                for (int i = 0; i < 4; i++) {
-                    if (i > 3 - gaps) {
+                for (int i = 0; i < num.length; i++) {
+                    if (i > num.length - 1 - gaps) {
                         num[i] = 0;
                     } else {
                         num[i] = num[i + gaps];
                     }
                 }
-                for (int i = 0; i < 4 - gaps; i++) {
-                    if (i == 3 - gaps) {
+                for (int i = 0; i < num.length - gaps; i++) {
+                    if (i == num.length - 1 - gaps) {
                         num[i] >>>= shift;
                     } else {
                         num[i] >>>= shift;

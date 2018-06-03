@@ -12,9 +12,15 @@ import kuruhuru.tictactoe.bignum.Bignum;
  */
 
 public class Game {
-    private int width; // width of game board
+
+    public static enum Field {
+        X, O, EMPTY
+    }
+
+    private int width;  // width of game board
     private int height; // height of game board
-    private int line;  // length of wining sequence
+    private int line;   // length of wining sequence
+    private final byte big;   // capacity of Bignum reprezenting a board
 
     private Bignum X; // Crosses on the board. Bit unit means a cross
     private Bignum O; // Zeros on the board. Bit single means zero
@@ -34,13 +40,13 @@ public class Game {
      */
     public Game(int width, int height, int line) {
 
-        // width should be   0 < width <= 256
-        width %= 256;
+        // width should be   0 < width <= 15
+        width %= 15;
         if (width < 0) width = - width;
         else if (width == 0) width = 3;
 
-        // height should be   0 < height <= 256
-        height %= 256;
+        // height should be   0 < height <= 15
+        height %= 15;
         if (height < 0) height = - height;
         else if (height == 0) height = 3;
 
@@ -49,9 +55,10 @@ public class Game {
         this.height = height;
         this.line = line;
 
-        this.X = new Bignum();
-        this.O = new Bignum();
-        this.filled = new Bignum();
+        this.big = (byte)((width*height)/64 + 1);
+        this.X = new Bignum(big);
+        this.O = new Bignum(big);
+        this.filled = new Bignum(big);
 
         // For convenience, the vertical should not be more than the horizontal
         if (height > width) {
@@ -72,7 +79,7 @@ public class Game {
         this.wins = new Bignum[possibleWins];
 
         // Indicator of the fullness of the board
-        Bignum one = Bignum.newOne();
+        Bignum one = Bignum.newOne(big);
         for (int i=0; i < this.height * this.width; i++) {
             this.filled.bitwiseOR(one);
             one.bitwiseShift(1);
@@ -82,9 +89,9 @@ public class Game {
         int winIndex = 0;
 
         // Horizontals
-        Bignum horizontal = new Bignum();
+        Bignum horizontal = new Bignum(big);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne();
+            one = Bignum.newOne(big);
             one.bitwiseShift(i);
             horizontal.bitwiseOR(one);
         }
@@ -98,9 +105,9 @@ public class Game {
         }
 
         // Verticals
-        Bignum vertical = new Bignum();
+        Bignum vertical = new Bignum(big);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne();
+            one = Bignum.newOne(big);
             one.bitwiseShift(i * this.width);
             vertical.bitwiseOR(one);
         }
@@ -114,13 +121,13 @@ public class Game {
         }
 
         // Diagonals
-        Bignum diag1 = new Bignum();
-        Bignum diag2 = new Bignum();
+        Bignum diag1 = new Bignum(big);
+        Bignum diag2 = new Bignum(big);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne();
+            one = Bignum.newOne(big);
             one.bitwiseShift(i * this.width + i);
             diag1.bitwiseOR(one);
-            one = Bignum.newOne();
+            one = Bignum.newOne(big);
             one.bitwiseShift(this.width - 1);
             one.bitwiseShift(i * this.width);
             one.bitwiseShift(-i);
@@ -148,33 +155,34 @@ public class Game {
      * Returns the cell corresponding to the (i, j) position on the board,
      * where -1 is the cross, 1 means zero, 0 is empty
      */
-    public int getField(int i, int j) {
-        Bignum one = Bignum.newOne();
+    public Field getField(int i, int j) {
+        Bignum one = Bignum.newOne(big);
         one.bitwiseShift(i * this.width + j);
         Bignum field = new Bignum(one);
         field.bitwiseAND(this.X);
         if (!field.isZero()) {
-            return -1;
+            return Field.X;
         }
         one.bitwiseAND(this.O);
         if (!one.isZero()) {
-            return 1;
+            return Field.O;
         }
-        return 0;
+        return Field.EMPTY;
     }
 
     /**
      * Prints board position
      */
+    @SuppressWarnings("Duplicates")
     public void printBoard() {
         for (int i=0; i < this.height; i++) {
             for (int j=0; j < this.width; j++) {
                 char field = '_';
                 switch (this.getField(i, j)) {
-                    case -1:
+                    case X:
                         field = 'X';
                         break;
-                    case 1:
+                    case O:
                         field = 'O';
                         break;
                 }
@@ -187,10 +195,11 @@ public class Game {
     /**
      * Prints board position with '*' for some fields
      */
+    @SuppressWarnings("Duplicates")
     public void printBoard(Bignum fields) {
         for (int i=0; i<this.height; i++) {
             for (int j=0; j < this.width; j++) {
-                Bignum one = Bignum.newOne();
+                Bignum one = Bignum.newOne(big);
                 one.bitwiseShift(i * this.width + j);
                 one.bitwiseAND(fields);
                 if (!one.isZero()) {
@@ -198,10 +207,10 @@ public class Game {
                 } else {
                     char field = '_';
                     switch (this.getField(i, j)) {
-                        case -1:
+                        case X:
                             field = 'X';
                             break;
-                        case 1:
+                        case O:
                             field = 'O';
                             break;
                     }
