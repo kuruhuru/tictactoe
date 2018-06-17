@@ -41,12 +41,12 @@ public class Game {
     public Game(int width, int height, int line) {
 
         // width should be   0 < width <= 15
-        width %= 15;
+        width %= 16;
         if (width < 0) width = - width;
         else if (width == 0) width = 3;
 
         // height should be   0 < height <= 15
-        height %= 15;
+        height %= 16;
         if (height < 0) height = - height;
         else if (height == 0) height = 3;
 
@@ -197,6 +197,7 @@ public class Game {
      */
     @SuppressWarnings("Duplicates")
     public void printBoard(Bignum fields) {
+        System.out.println("fields = " + fields.toBinaryString());
         for (int i=0; i<this.height; i++) {
             for (int j=0; j < this.width; j++) {
                 Bignum one = Bignum.newOne(big);

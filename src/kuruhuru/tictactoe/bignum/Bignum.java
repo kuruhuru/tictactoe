@@ -183,12 +183,14 @@ public class Bignum {
                         num[i] = num[i - gaps];
                     }
                 }
-                for (int i = num.length-1; i >= gaps; i--) {
-                    if (i == gaps) {
-                        num[i] <<= shift;
-                    } else {
-                        num[i] <<= shift;
-                        num[i] |= num[i - 1] >> (64 - shift);
+                if (shift != 0) {
+                    for (int i = num.length - 1; i >= gaps; i--) {
+                        if (i == gaps) {
+                            num[i] <<= shift;
+                        } else {
+                            num[i] <<= shift;
+                            num[i] |= num[i - 1] >> (64 - shift);
+                        }
                     }
                 }
             }
@@ -208,12 +210,14 @@ public class Bignum {
                         num[i] = num[i + gaps];
                     }
                 }
-                for (int i = 0; i < num.length - gaps; i++) {
-                    if (i == num.length - 1 - gaps) {
-                        num[i] >>>= shift;
-                    } else {
-                        num[i] >>>= shift;
-                        num[i] |= num[i + 1] << (64 - shift);
+                if (shift != 0) {
+                    for (int i = 0; i < num.length - gaps; i++) {
+                        if (i == num.length - 1 - gaps) {
+                            num[i] >>>= shift;
+                        } else {
+                            num[i] >>>= shift;
+                            num[i] |= num[i + 1] << (64 - shift);
+                        }
                     }
                 }
             }
