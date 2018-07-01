@@ -2,6 +2,8 @@ package kuruhuru.tictactoe.ai;
 
 import kuruhuru.tictactoe.bignum.Bignum;
 
+import java.util.ArrayList;
+
 /**
  * The class implements a game of tic-tac-toe,
  * where the board cells are represented in the form of a sequence of bits.
@@ -17,10 +19,26 @@ public class Game {
         X, O, EMPTY
     }
 
+    public static enum Result {
+        X, O, DRAW, UNFINISHED
+    }
+
+    public static class GameResult {
+        Result result = Result.UNFINISHED;
+        Bignum win = null;
+    }
+
+    public static enum Player {
+        X, O;
+        public Player next() {
+            return (this == X)? O : X;
+        }
+    }
+
     private int width;  // width of game board
     private int height; // height of game board
     private int line;   // length of wining sequence
-    private final byte big;   // capacity of Bignum reprezenting a board
+    private final byte bigSize;   // capacity of Bignum representing a board
 
     private Bignum X; // Crosses on the board. Bit unit means a cross
     private Bignum O; // Zeros on the board. Bit single means zero
@@ -55,10 +73,10 @@ public class Game {
         this.height = height;
         this.line = line;
 
-        this.big = (byte)((width*height)/64 + 1);
-        this.X = new Bignum(big);
-        this.O = new Bignum(big);
-        this.filled = new Bignum(big);
+        this.bigSize = (byte)((width*height)/64 + 1);
+        this.X = new Bignum(bigSize);
+        this.O = new Bignum(bigSize);
+        this.filled = new Bignum(bigSize);
 
         // For convenience, the vertical should not be more than the horizontal
         if (height > width) {
@@ -79,7 +97,7 @@ public class Game {
         this.wins = new Bignum[possibleWins];
 
         // Indicator of the fullness of the board
-        Bignum one = Bignum.newOne(big);
+        Bignum one = Bignum.newOne(bigSize);
         for (int i=0; i < this.height * this.width; i++) {
             this.filled.bitwiseOR(one);
             one.bitwiseShift(1);
@@ -89,9 +107,9 @@ public class Game {
         int winIndex = 0;
 
         // Horizontals
-        Bignum horizontal = new Bignum(big);
+        Bignum horizontal = new Bignum(bigSize);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne(big);
+            one = Bignum.newOne(bigSize);
             one.bitwiseShift(i);
             horizontal.bitwiseOR(one);
         }
@@ -105,9 +123,9 @@ public class Game {
         }
 
         // Verticals
-        Bignum vertical = new Bignum(big);
+        Bignum vertical = new Bignum(bigSize);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne(big);
+            one = Bignum.newOne(bigSize);
             one.bitwiseShift(i * this.width);
             vertical.bitwiseOR(one);
         }
@@ -121,13 +139,13 @@ public class Game {
         }
 
         // Diagonals
-        Bignum diag1 = new Bignum(big);
-        Bignum diag2 = new Bignum(big);
+        Bignum diag1 = new Bignum(bigSize);
+        Bignum diag2 = new Bignum(bigSize);
         for (int i=0; i < this.line; i++) {
-            one = Bignum.newOne(big);
+            one = Bignum.newOne(bigSize);
             one.bitwiseShift(i * this.width + i);
             diag1.bitwiseOR(one);
-            one = Bignum.newOne(big);
+            one = Bignum.newOne(bigSize);
             one.bitwiseShift(this.width - 1);
             one.bitwiseShift(i * this.width);
             one.bitwiseShift(-i);
@@ -156,7 +174,7 @@ public class Game {
      * where -1 is the cross, 1 means zero, 0 is empty
      */
     public Field getField(int i, int j) {
-        Bignum one = Bignum.newOne(big);
+        Bignum one = Bignum.newOne(bigSize);
         one.bitwiseShift(i * this.width + j);
         Bignum field = new Bignum(one);
         field.bitwiseAND(this.X);
@@ -200,7 +218,7 @@ public class Game {
         System.out.println("fields = " + fields.toBinaryString());
         for (int i=0; i<this.height; i++) {
             for (int j=0; j < this.width; j++) {
-                Bignum one = Bignum.newOne(big);
+                Bignum one = Bignum.newOne(bigSize);
                 one.bitwiseShift(i * this.width + j);
                 one.bitwiseAND(fields);
                 if (!one.isZero()) {
@@ -230,5 +248,75 @@ public class Game {
             printBoard(wins[i]);
             System.out.println();
         }
+    }
+
+    /**
+     * Returns game result
+     */
+    public GameResult result() {
+        GameResult res = new GameResult();
+        for( Bignum w : wins){
+            Bignum win = new Bignum(w);
+            win.bitwiseAND(this.X);
+            if (win.equals(w)) {
+                res.result = Result.X;
+                res.win = win;
+                return res;
+            }
+            win = new Bignum(w);
+            win.bitwiseAND(this.O);
+            if (win.equals(w)) {
+                res.result = Result.O;
+                res.win = win;
+                return res;
+            }
+        }
+        // If board is full then draw
+        Bignum filled = new Bignum(this.X);
+        filled.bitwiseOR(this.O);
+        if (filled.equals(this.filled)) {
+            res.result = Result.DRAW;
+        }
+
+        return res;
+    }
+
+    /**
+     * Make move on the board if it possible.
+     * If not - returns false
+     */
+    public boolean makeMove(Bignum move, Player player) {
+        Bignum field = new Bignum(this.X);
+        field.bitwiseOR(this.O);
+        field.bitwiseAND(move);
+        if (!field.isZero())//illegal move, field is not empty
+            return false;
+
+        if (player == Player.X) {
+            this.X.bitwiseOR(move);
+        } else {
+            this.O.bitwiseOR(move);
+        }
+        return true;
+    }
+
+    /**
+     * Undo move on the board if it possible.
+     * If not - returns false
+     */
+    public void undoMove(Bignum move, Player player) {
+        if (player == Player.X)
+            this.X.bitwiseXOR(move);
+        else
+            this.O.bitwiseXOR(move);
+    }
+
+    /**
+     *
+     * @return all possible moves as a list
+     */
+    public ArrayList<Bignum> findPossibleMoves() {
+        Bignum empty = new Bignum(this.X).bitwiseOR(this.O).bitwiseXOR(this.filled);
+        return Bignum.getBits(empty);
     }
 }

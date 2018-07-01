@@ -1,5 +1,6 @@
 package kuruhuru.tictactoe.bignum;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -10,7 +11,11 @@ import java.util.Arrays;
  * @version %I%, %G%
  */
 public class Bignum {
-    private long[] num;
+    public static enum Compare {
+        LESS, GREATER, EQUAL
+    }
+
+    protected long[] num;
 
 
     /**
@@ -100,14 +105,14 @@ public class Bignum {
 
     /**
      * @param bignum another Bignum to compare
-     * @return -1 if this is less than bignum, 0 if both are equal, 1 if this is greater than bignum
+     * @return Compare
      */
-    public int compare(Bignum bignum) {
+    public Compare compare(Bignum bignum) {
         for (int i = num.length - 1; i >= 0; i--) {
-            if (num[i] > bignum.num[i]) return 1;
-            if (num[i] < bignum.num[i]) return -1;
+            if (num[i] > bignum.num[i]) return Compare.GREATER;
+            if (num[i] < bignum.num[i]) return Compare.LESS;
         }
-        return 0;
+        return Compare.LESS;
     }
 
     /**
@@ -159,6 +164,19 @@ public class Bignum {
         for (int i=0; i<num.length; i++)
             if (--num[i] != -1) break;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Bignum bignum = (Bignum) o;
+        return Arrays.equals(num, bignum.num);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(num);
     }
 
     /**
@@ -221,7 +239,25 @@ public class Bignum {
                     }
                 }
             }
+
         }
         return this;
+    }
+
+    /**
+     *
+     * @return a list of Bignum objects where only one bit is set
+     */
+    public static ArrayList<Bignum> getBits(Bignum big) {
+        ArrayList<Bignum> res = new ArrayList<>(big.num.length);
+        Bignum bits = new Bignum(big);
+        while (!bits.isZero()) {
+            Bignum move = new Bignum(bits);
+            bits.bitwiseAND(new Bignum(bits).minusOne());
+            move.bitwiseXOR(bits);
+            res.add(move);
+        }
+
+        return res;
     }
 }
