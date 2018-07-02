@@ -15,11 +15,11 @@ import java.util.ArrayList;
 
 public class Game {
 
-    public static enum Field {
+    public enum Field {
         X, O, EMPTY
     }
 
-    public static enum Result {
+    public enum Result {
         X, O, DRAW, UNFINISHED
     }
 
@@ -28,7 +28,7 @@ public class Game {
         Bignum win = null;
     }
 
-    public static enum Player {
+    public enum Player {
         X, O;
         public Player next() {
             return (this == X)? O : X;
@@ -318,5 +318,65 @@ public class Game {
     public ArrayList<Bignum> findPossibleMoves() {
         Bignum empty = new Bignum(this.X).bitwiseOR(this.O).bitwiseXOR(this.filled);
         return Bignum.getBits(empty);
+    }
+
+    /**
+     * Sorts possible moves of the player, according to their strength
+     * @return sorted moves
+     */
+    public SortedMoves sortPossibleMoves(Player player) {
+        SortedMoves res = new SortedMoves();
+
+        Bignum player_boardl;
+        Bignum playerBoard;
+        Bignum opponentBoard;
+
+
+        if (player == Player.X) {
+            playerBoard = new Bignum(this.X);
+            opponentBoard = new Bignum(this.O);
+        } else {
+            playerBoard = new Bignum(this.O);
+            opponentBoard = new Bignum(this.X);
+        }
+
+        for (Bignum w: this.wins) {
+            Bignum win = new Bignum(w);
+            Bignum potentialMoves = win.bitwiseAND(playerBoard);
+            if(!potentialMoves.isZero()) {
+                potentialMoves.bitwiseXOR(win); // The moves required to fill a wining row
+                if (new Bignum(potentialMoves).bitwiseAND(opponentBoard).isZero()) {  // All fields are free
+                    int count = 0;
+                    Bignum pmove = new Bignum(potentialMoves);
+                    while (!potentialMoves.isZero()) {
+                        potentialMoves.bitwiseAND(new Bignum(potentialMoves).minusOne());
+                        count += 1;
+                    }
+                    if (count == 1) {  // wining move found
+                        res.wining = pmove;
+                        return res;
+                    } else if (count == 2) { // Check
+                        Bignum potentialFork = new Bignum(pmove).bitwiseAND(res.checks);
+                        if (!potentialFork.isZero()) {
+                            int number = 0;
+                            Bignum pfork = new Bignum(potentialFork);
+                            while (!pfork.isZero()) {
+                                pfork.bitwiseAND(new Bignum(pfork).minusOne());
+                                number += 1;
+                            }
+                            if (number == 1) {  // Exactly fork
+                                res.fork = potentialFork;
+                            }
+                            res.potentialForks.bitwiseOR(potentialFork);
+                        } else { // Check
+                            res.checks.bitwiseOR(pmove);
+                        }
+                    } else {
+                        res.goodMoves.bitwiseOR(pmove);
+                    }
+                }
+            }
+        }
+        return res;
     }
 }
